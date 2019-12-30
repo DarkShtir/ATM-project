@@ -13,18 +13,15 @@ class Person {
 }
 
 class Scene {
-	// arrQueue = [];
-	arrRoom = [];
-
 	createScene() {
 		const scene = this.createAllAtm(3);
-		this.createQueue(5);
+		const queue = this.createQueue(5);
 		console.log(scene);
+		console.log(queue);
 	}
 
 	createAtm(idAtm) {
-		let atm = new Atm(idAtm);
-		return atm;
+		return new Atm(idAtm);
 	}
 
 	createAllAtm(amountAtm) {
@@ -60,31 +57,36 @@ class Scene {
 				clearTimeout = timerID;
 			}
 		}, rand);
+		return arrQueue;
 	}
-
-	// createArrPersons(num) {
-	// 	for (let i = 0; i < num; i++) {
-	// 		addedPersonsInRoom(i + 1);
-	// 	}
-	// }
-
-	// addedPersonsInRoom(i) {
-	// 	setTimeout(i => {
-	// 		arrRoom.push(createPerson(i));
-	// 		console.log(arrRoom);
-	// 	}, randomize(5));
-	// }
-
-	// createQueue(i) {
-	// 	arrQueue.push(arrRoom[i]);
-	// 	console.log(arrQueue);
-	// }
 
 	startApp() {
 		this.createScene();
-		// startQueue();
 	}
 }
+
+class Render {
+	createButton() {
+		const body = document.querySelector('body');
+		let div = document.createElement('div');
+		let btnStart = document.createElement('button');
+		btnStart.innerText = 'Start';
+		div.appendChild(btnStart);
+		body.appendChild(div);
+	}
+}
+
+class Controller {
+	startApp() {
+		const btn = document.querySelector('button');
+		btn.addEventListener('click', () => {
+			const newScene = new Scene();
+			newScene.startApp();
+		});
+	}
+}
+
+class Model {}
 
 function randomize(max, min = 1) {
 	const rand = 1000 * Math.floor(min + Math.random() * (max + 1 - min));
@@ -92,5 +94,9 @@ function randomize(max, min = 1) {
 	return rand;
 }
 
-const newScene = new Scene();
-newScene.startApp();
+// const newScene = new Scene();
+// newScene.startApp();
+const render = new Render();
+render.createButton();
+const controller = new Controller();
+controller.startApp();
