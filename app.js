@@ -3,6 +3,9 @@ class Atm {
 		this.idAtm = idAtm;
 	}
 	isFree = true;
+	switchState() {
+		this.isFree ? false : true;
+	}
 }
 
 class Person {
@@ -13,11 +16,11 @@ class Person {
 }
 
 class Scene {
+	scene = [];
+	queue = [];
 	createScene() {
-		const scene = this.createAllAtm(3);
-		const queue = this.createQueue(5);
-		console.log(scene);
-		console.log(queue);
+		this.scene = this.createAllAtm(3);
+		this.queue = this.createQueue(5);
 	}
 
 	createAtm(idAtm) {
@@ -63,17 +66,37 @@ class Scene {
 	startApp() {
 		this.createScene();
 	}
+	getScene() {
+		return this.scene;
+	}
+	getQueue() {
+		return this.queue;
+	}
 }
 
 class Render {
-	createButton() {
-		const body = document.querySelector('body');
-		let div = document.createElement('div');
-		let btnStart = document.createElement('button');
-		btnStart.innerText = 'Start';
-		div.appendChild(btnStart);
-		body.appendChild(div);
+	body = document.querySelector('body');
+	div = document.createElement('div');
+
+	createButton(nameBtn) {
+		let btn = document.createElement('button');
+		btn.innerText = nameBtn;
+		this.div.appendChild(btn);
+		this.body.appendChild(this.div);
 	}
+
+	// createStartButton() {
+	// 	let btn = document.createElement('button');
+	// 	btn.innerText = 'Start';
+	// 	this.div.appendChild(btn);
+	// 	this.body.appendChild(this.div);
+	// }
+	// createStopButton() {
+	// 	let btn = document.createElement('button');
+	// 	btn.innerText = 'Stop';
+	// 	this.div.appendChild(btn);
+	// 	this.body.appendChild(this.div);
+	// }
 }
 
 class Controller {
@@ -97,6 +120,8 @@ function randomize(max, min = 1) {
 // const newScene = new Scene();
 // newScene.startApp();
 const render = new Render();
-render.createButton();
+render.createButton('Start');
+render.createButton('Stop');
+
 const controller = new Controller();
 controller.startApp();
