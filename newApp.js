@@ -2,6 +2,7 @@ class Atm {
 	constructor(idAtm) {
 		this.idAtm = idAtm;
 	}
+	user = [];
 	isFree = true;
 	switchState() {
 		this.isFree ? false : true;
@@ -13,6 +14,17 @@ class Person {
 		this.idPerson = idPerson;
 	}
 	workWithAtm = randomize(3, 1);
+	useAtm() {
+		switchState();
+		//изменение состояния АТМ в пользователе.
+		//по сути логика проста АТМ извлекает пользователя из очереди
+		//пользователь меняет состояние АТМ на isFree=false
+		//по истечении workWithAtm состояние меняется на isFree=true
+		//следующий пользователь из очереди готов к извлечению.
+		setTimeout(() => {
+			switchState();
+		}, this.workWithAtm);
+	}
 }
 
 let scene = [];
@@ -70,6 +82,37 @@ function randomize(max, min = 1) {
 	const rand = 1000 * Math.floor(min + Math.random() * (max + 1 - min));
 	console.log(rand);
 	return rand;
+}
+
+function createEvent() {
+	const myEvent = new CustomEvent('AtmFree', {
+		detail: {
+			state: free,
+		},
+	});
+	return myEvent;
+}
+function addCustomEvent(arr) {
+	for (let i = 0; i < arr.length; i++) {
+		let event = createEvent();
+		arr[i].dispatchEvent(event);
+		console.log('event Added!');
+	}
+}
+addCustomEvent(scene);
+
+function useAtm(idAtm, idPerson) {
+	scene[idAtm - 1].user = queue.shift();
+	switchState();
+	//изменение состояния АТМ в пользователе.
+	//по сути логика проста АТМ извлекает пользователя из очереди
+	//пользователь меняет состояние АТМ на isFree=false
+	//по истечении workWithAtm состояние меняется на isFree=true
+	//следующий пользователь из очереди готов к извлечению.
+	setTimeout(() => {
+		switchState();
+		scene[idAtm - 1].user = [];
+	}, scene[idAtm - 1].user.workWithAtm);
 }
 
 createScene(3, 5);
