@@ -6,6 +6,7 @@ class Model {
 		this.queue = [];
 		this.amountPerson = 0;
 		this.amountAtm = 0;
+		this.idPerson = 0;
 	}
 	createAtm() {
 		return new Atm(this.amountAtm + 1);
@@ -17,6 +18,11 @@ class Model {
 	removeAtmFromArr() {
 		this.arrAtm.splice(this.arrAtm.length - 1, 1);
 	}
+	createScene(num = 3) {
+		for (let i = 0; i < num; i++) {
+			this.pushAtmInArr(this.createAtm());
+		}
+	}
 	addPersonInQueue(person) {
 		this.queue.push(person);
 		console.log('Work in progress!');
@@ -26,9 +32,26 @@ class Model {
 		console.log('Work in progress!');
 	}
 	createPerson() {
-		return new Person(this.amountPerson++);
+		let rand = this.randomizer(3, 1);
+		return new Person(this.idPerson++, rand);
 		console.log('Work in progress!');
 	}
+	createQueue() {
+		let rand = this.randomizer(5);
+		let num = this.amountPerson;
+		let iter = 0;
+		let timerID = setTimeout(function create() {
+			if (iter < num) {
+				iter++;
+				addPersonInQueue(createPerson());
+				rand = this.randomizer(5);
+				timerID = setTimeout(create, rand);
+			} else {
+				clearTimeout = timerID;
+			}
+		}, rand);
+	}
+
 	useAtm(idAtm) {
 		let time = this.queue[0].workWithAtm;
 		let numAtm = this.arrAtm[idAtm];
@@ -80,9 +103,9 @@ class Atm {
 }
 
 class Person {
-	constructor(idPerson) {
+	constructor(idPerson, rand) {
 		this.idPerson = idPerson;
-		workWithAtm = randomize(3, 1);
+		workWithAtm = rand;
 	}
 }
 
