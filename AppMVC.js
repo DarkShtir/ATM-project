@@ -10,7 +10,6 @@ class Model {
 	}
 	createAtm() {
 		return new Atm(this.amountAtm + 1);
-		console.log('Work in progress!');
 	}
 	pushAtmInArr(atm) {
 		this.arrAtm.push(atm);
@@ -25,16 +24,13 @@ class Model {
 	}
 	addPersonInQueue(person) {
 		this.queue.push(person);
-		console.log('Work in progress!');
 	}
 	deletePersonFromQueue() {
 		this.queue.splice(0, 1);
-		console.log('Work in progress!');
 	}
 	createPerson() {
 		let rand = this.randomizer(3, 1);
 		return new Person(this.idPerson++, rand);
-		console.log('Work in progress!');
 	}
 	createQueue() {
 		let rand = this.randomizer(5);
@@ -43,7 +39,7 @@ class Model {
 		let timerID = setTimeout(function create() {
 			if (iter < num) {
 				iter++;
-				addPersonInQueue(createPerson());
+				this.addPersonInQueue(this.createPerson());
 				rand = this.randomizer(5);
 				timerID = setTimeout(create, rand);
 			} else {
@@ -60,7 +56,6 @@ class Model {
 		setTimeout(() => {
 			numAtm.switchState();
 		}, time);
-		console.log('Work in progress!');
 	}
 
 	randomizer(max, min = 1) {
@@ -76,6 +71,39 @@ class View {
 	}
 	render() {
 		console.log('Work in progress!');
+	}
+	createControl() {
+		let fragment = document.createDocumentFragment();
+		let div = this.createNewElement('div', 'control');
+		let startBtn = this.createBtn('Start');
+		let finishBtn = this.createBtn('Finish');
+		let addAtm = this.createBtn('AddATM');
+		div.append(startBtn);
+		div.append(finishBtn);
+		div.append(addAtm);
+		fragment.append(div);
+		this.body.append(fragment);
+	}
+	createBtn(name) {
+		let btn = document.createElement('button');
+		btn.className = `btn-${name}`;
+		btn.innerHTML = name;
+		return btn;
+	}
+
+	createAtm(arr) {
+		let fragment = document.createDocumentFragment();
+		arr.forEach(currentVal => {
+			let div = document.createElement('div');
+			div.className = `${currentVal.idAtm} atm`;
+			fragment.append(div);
+		});
+		this.body.append(fragment);
+	}
+	createNewElement(typeOfElement, nameOFClass = `${typeOfElement}`) {
+		let newEl = document.createElement(`${typeOfElement}`);
+		newEl.className = nameOFClass;
+		return newEl;
 	}
 	addElement() {
 		console.log('Work in progress!');
@@ -113,12 +141,7 @@ class Btn {
 	constructor(name) {
 		this.name = name;
 	}
-	createBtn() {
-		let btn = document.createElement('button');
-		btn.className(`btn-${this.name}`);
-		btn.innerHTML(this.name);
-		return btn;
-	}
+
 	deleteBtn() {
 		console.log('Work in progress!');
 	}
