@@ -7,6 +7,7 @@ class Model {
 		this.amountPerson = 0;
 		this.amountAtm = 0;
 		this.idPerson = 0;
+		// this.createPerson = this.createPerson.bind(this);
 	}
 	createAtm() {
 		return new Atm(this.amountAtm + 1);
@@ -29,19 +30,22 @@ class Model {
 		this.queue.splice(0, 1);
 	}
 	createPerson() {
-		let rand = this.randomizer(3, 1);
-		return new Person(this.idPerson++, rand);
+		let rand = this.randomizer(3);
+		console.log(this);
+		return new Person(++this.idPerson, rand);
 	}
+
 	createQueue() {
 		let rand = this.randomizer(5);
 		let num = this.amountPerson;
 		let iter = 0;
+
 		let timerID = setTimeout(function create() {
 			if (iter < num) {
 				iter++;
 				this.addPersonInQueue(this.createPerson());
-				rand = this.randomizer(5);
-				timerID = setTimeout(create, rand);
+				rand = self.randomizer(5);
+				timerID = setTimeout(this.create.bind(this), rand);
 			} else {
 				clearTimeout = timerID;
 			}
@@ -70,6 +74,7 @@ class View {
 		this.body = document.querySelector('body');
 	}
 	render() {
+		this.createControl();
 		console.log('Work in progress!');
 	}
 	createControl() {
@@ -78,26 +83,29 @@ class View {
 		let startBtn = this.createBtn('Start');
 		let finishBtn = this.createBtn('Finish');
 		let addAtm = this.createBtn('AddATM');
+		let deleteAtm = this.createBtn('DeleteAtm');
 		div.append(startBtn);
 		div.append(finishBtn);
 		div.append(addAtm);
+		div.append(deleteAtm);
 		fragment.append(div);
 		this.body.append(fragment);
 	}
 	createBtn(name) {
 		let btn = document.createElement('button');
-		btn.className = `btn-${name}`;
+		btn.className = `btn-${name} btn`;
 		btn.innerHTML = name;
 		return btn;
 	}
 
 	createAtm(arr) {
 		let fragment = document.createDocumentFragment();
-		arr.forEach(currentVal => {
-			let div = document.createElement('div');
-			div.className = `${currentVal.idAtm} atm`;
-			fragment.append(div);
+		let divScene = this.createNewElement('div', 'atm-scene');
+		arr.forEach((currentVal, index) => {
+			let div = this.createNewElement('div', `${index + 1}-atm atm`);
+			divScene.append(div);
 		});
+		fragment.append(divScene);
 		this.body.append(fragment);
 	}
 	createNewElement(typeOfElement, nameOFClass = `${typeOfElement}`) {
@@ -118,6 +126,21 @@ class Controller {
 		this.view = view;
 		this.model = model;
 	}
+	startEvent() {
+		let div = document.querySelector('.control');
+		console.log(div);
+		div.addEventListener('click', e => {
+			console.log(e.target.className);
+			if (e.target.className == 'btn-Start btn') {
+				console.log('You press Start');
+				this.model.amountPerson = 5;
+				this.model.createScene();
+				this.view.createAtm(this.model.arrAtm);
+				this.model.createQueue();
+			} else if (e.target.className === 'Finish') {
+			}
+		});
+	}
 }
 
 class Atm {
@@ -133,7 +156,7 @@ class Atm {
 class Person {
 	constructor(idPerson, rand) {
 		this.idPerson = idPerson;
-		workWithAtm = rand;
+		this.workWithAtm = rand;
 	}
 }
 
@@ -146,3 +169,9 @@ class Btn {
 		console.log('Work in progress!');
 	}
 }
+
+const view = new View();
+view.render();
+const model = new Model();
+const controller = new Controller(view, model);
+controller.startEvent();

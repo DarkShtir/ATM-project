@@ -1,5 +1,37 @@
 div{
 background-color: gray;
 width: 200px;
-height: 200px;    
+height: 200px; 
+margin: 10px;   
+}
+.control{
+    display: flex;
+    justify-content: space-around;
+    background-color:blueviolet;
+    height: 50px;
+    width: auto;
+}
+.control .btn{
+    justify-content: space-between;
+    align-items:center;
+    height: auto;
+    margin: auto 5px;
+    border: 2px solid black;
+    text-align: center;
+    font-size: 20px;
+    border-radius: 30%;
+}
+.atm-scene{
+    display: flex;
+    justify-content: space-around;
+    background-color: yellow;
+    border: 5px solid black;
+    width: auto;
+}
+.atm{
+    align-items: center;
+    justify-content: space-between;
+    background-color: green;
+    height: auto;
+    border-radius: 30%;
 }
