@@ -1,13 +1,27 @@
+//EventEmmiter - create events and listener them
+class EventEmmiter {
+	constructor() {
+		this.events = {};
+	}
+	on(event, listener) {
+		(this.events[event] || (this.events[event] = [])).push(listener);
+		return this;
+	}
+	emitter(event, arg) {
+		(this.events[event] || []).slice().forEach(lsn => lsn(arg));
+	}
+}
 //Model-business logic
-class Model {
+class Model extends EventEmmiter {
 	constructor(controller) {
+		super();
 		this.controller = controller;
 		this.arrAtm = [];
 		this.queue = [];
 		this.amountPerson = 0;
 		this.amountAtm = 0;
 		this.idPerson = 0;
-		// this.createPerson = this.createPerson.bind(this);
+		self = this;
 	}
 	createAtm() {
 		return new Atm(this.amountAtm + 1);
@@ -23,33 +37,56 @@ class Model {
 			this.pushAtmInArr(this.createAtm());
 		}
 	}
-	addPersonInQueue(person) {
-		this.queue.push(person);
-	}
 	deletePersonFromQueue() {
 		this.queue.splice(0, 1);
 	}
-	createPerson() {
-		let rand = this.randomizer(3);
-		console.log(this);
-		return new Person(++this.idPerson, rand);
-	}
+	// addPersonInQueue(person) {
+	// 	this.queue.push(person);
+	// }
+	// createPerson() {
+	// 	let rand = this.randomizer(3);
+	// 	console.log(this);
+	// 	let newPerson = new Person(++this.idPerson, rand);
+	// 	return newPerson;
+	// }
 
-	createQueue() {
-		let rand = this.randomizer(5);
+	// createQueue() {
+	// 	let rand = this.randomizer(5);
+	// 	let num = this.amountPerson;
+	// 	let iter = 0;
+
+	// 	let timerID = setTimeout(create => {
+	// 		if (iter < num) {
+	// 			iter++;
+	// 			let pers = self.createPerson();
+	// 			this.addPersonInQueue(pers);
+	// 			rand = this.randomizer(5);
+	// 			timerID = setTimeout(create, rand);
+	// 		} else {
+	// 			clearTimeout = timerID;
+	// 		}
+	// 	}, rand);
+	// }
+
+	createQueue(queue) {
+		let timer = self.randomizer(5);
 		let num = this.amountPerson;
 		let iter = 0;
 
 		let timerID = setTimeout(function create() {
 			if (iter < num) {
 				iter++;
-				this.addPersonInQueue(this.createPerson());
-				rand = self.randomizer(5);
-				timerID = setTimeout(this.create.bind(this), rand);
+				let newPerson = new Person(iter, self.randomizer(3));
+				console.log('Person created');
+				queue.push(newPerson);
+				console.log('Person added in queue');
+				self.emitter('personAdded', queue[iter - 1].idPerson);
+				timer = self.randomizer(5);
+				timerID = setTimeout(create, timer);
 			} else {
 				clearTimeout = timerID;
 			}
-		}, rand);
+		}, timer);
 	}
 
 	useAtm(idAtm) {
@@ -68,6 +105,7 @@ class Model {
 		return rand;
 	}
 }
+
 //View-render DOM
 class View {
 	constructor() {
@@ -108,6 +146,21 @@ class View {
 		fragment.append(divScene);
 		this.body.append(fragment);
 	}
+	createPerson(personID) {
+		let fragment = document.createDocumentFragment();
+		let queueDiv = document.querySelector('.queue');
+		let div = this.createNewElement('div', `personID-${personID} person`);
+		div.innerHTML = personID;
+		fragment.append(div);
+		queueDiv.appendChild(fragment);
+		console.log(queueDiv);
+	}
+	createQueue() {
+		let fragment = document.createDocumentFragment();
+		let divQueue = this.createNewElement('div', 'queue');
+		fragment.append(divQueue);
+		this.body.append(fragment);
+	}
 	createNewElement(typeOfElement, nameOFClass = `${typeOfElement}`) {
 		let newEl = document.createElement(`${typeOfElement}`);
 		newEl.className = nameOFClass;
@@ -121,10 +174,16 @@ class View {
 	}
 }
 //Controller-Listen event from view and transfer them in Model and backward
-class Controller {
+class Controller extends EventEmmiter {
 	constructor(view, model) {
+		super();
 		this.view = view;
 		this.model = model;
+		model.on('personAdded', personId => this.rebuildQueue(personId));
+	}
+	rebuildQueue(personId) {
+		console.log(`My person ID: ${personId}`);
+		this.view.createPerson(personId);
 	}
 	startEvent() {
 		let div = document.querySelector('.control');
@@ -136,7 +195,8 @@ class Controller {
 				this.model.amountPerson = 5;
 				this.model.createScene();
 				this.view.createAtm(this.model.arrAtm);
-				this.model.createQueue();
+				this.view.createQueue();
+				this.model.createQueue(this.model.queue);
 			} else if (e.target.className === 'Finish') {
 			}
 		});
@@ -157,16 +217,6 @@ class Person {
 	constructor(idPerson, rand) {
 		this.idPerson = idPerson;
 		this.workWithAtm = rand;
-	}
-}
-
-class Btn {
-	constructor(name) {
-		this.name = name;
-	}
-
-	deleteBtn() {
-		console.log('Work in progress!');
 	}
 }
 
