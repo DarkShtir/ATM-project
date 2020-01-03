@@ -32,13 +32,21 @@ class Model extends EventEmmiter {
 	removeAtmFromArr() {
 		this.arrAtm.splice(this.arrAtm.length - 1, 1);
 	}
-	createScene(num = 3) {
+	createScene(num = 1) {
 		for (let i = 0; i < num; i++) {
 			this.pushAtmInArr(this.createAtm());
 		}
 	}
 	deletePersonFromQueue() {
-		this.queue.splice(0, 1);
+		let time = this.queue[0].workWithAtm;
+		console.log(`My time: ${time}`);
+		console.log(`My ID ${this.queue[0].idPerson}`);
+		setTimeout(() => {
+			self.emitter('personDeleted', this.queue[0].idPerson);
+			this.queue.splice(0, 1);
+		}, 2000);
+		console.log(this.queue);
+		return time;
 	}
 	// addPersonInQueue(person) {
 	// 	this.queue.push(person);
@@ -69,7 +77,7 @@ class Model extends EventEmmiter {
 	// }
 
 	createQueue(queue) {
-		let timer = self.randomizer(5);
+		let timer = self.randomizer(2);
 		let num = this.amountPerson;
 		let iter = 0;
 
@@ -78,25 +86,56 @@ class Model extends EventEmmiter {
 				iter++;
 				let newPerson = new Person(iter, self.randomizer(3));
 				console.log('Person created');
-				queue.push(newPerson);
+				console.log(newPerson);
+				self.queue.push(newPerson);
 				console.log('Person added in queue');
+				// console.log(self.queue[iter - 1].workWithAtm);
 				self.emitter('personAdded', queue[iter - 1].idPerson);
-				timer = self.randomizer(5);
+				timer = self.randomizer(2);
 				timerID = setTimeout(create, timer);
 			} else {
 				clearTimeout = timerID;
 			}
 		}, timer);
 	}
-
-	useAtm(idAtm) {
-		let time = this.queue[0].workWithAtm;
-		let numAtm = this.arrAtm[idAtm];
-		numAtm.switchState();
-		console.log(`Atm ${numAtm} is busy`);
+	// checkPersonInBegin() {
+	// 	if (this.queue[0]) {
+	// 		self.emitter('IamFirst', this.queue[0].personID);
+	// 	} else {
+	// 		console.log('Очередь пуста!');
+	// 	}
+	// }
+	// checkStateAtm() {
+	// 	this.arrAtm.forEach((value, index) => {
+	// 		if (value.isFree) {
+	// 			return value.idAtm;
+	// 		} else {
+	// 			console.log('Все банкоматы заняты!');
+	// 		}
+	// 	});
+	// }
+	useAtm(idFreeAtm) {
+		if (this.queue.length < 1) {
+			console.log('Очередь пуста');
+		}
+		let time = this.deletePersonFromQueue();
+		let usedAtm = this.arrAtm[idFreeAtm];
+		console.log(usedAtm);
+		usedAtm.switchState();
+		self.emitter('iAmBusy', idFreeAtm);
+		console.log(`Atm ${idFreeAtm} is busy`);
 		setTimeout(() => {
-			numAtm.switchState();
+			usedAtm.switchState();
+			self.emitter('IamFree', idFreeAtm);
 		}, time);
+	}
+
+	checkAtm() {
+		this.arrAtm.forEach(value => {
+			if (value.isFree) {
+				this.useAtm(value.idAtm);
+			}
+		});
 	}
 
 	randomizer(max, min = 1) {
@@ -141,6 +180,7 @@ class View {
 		let divScene = this.createNewElement('div', 'atm-scene');
 		arr.forEach((currentVal, index) => {
 			let div = this.createNewElement('div', `${index + 1}-atm atm`);
+			div.id = index + 1;
 			divScene.append(div);
 		});
 		fragment.append(divScene);
@@ -153,6 +193,7 @@ class View {
 		div.innerHTML = personID;
 		fragment.append(div);
 		queueDiv.appendChild(fragment);
+		console.log('Человек добавлен в очереди html');
 		console.log(queueDiv);
 	}
 	createQueue() {
@@ -161,10 +202,20 @@ class View {
 		fragment.append(divQueue);
 		this.body.append(fragment);
 	}
+	deletePersonFromQueue(personID) {
+		let deletedPerson = document.querySelector(`.personID-${personID}`);
+		console.log(deletedPerson);
+		deletedPerson.parentNode.removeChild(deletedPerson);
+		console.log(`Удаляю человека из очереди с ID ${personID}`);
+	}
 	createNewElement(typeOfElement, nameOFClass = `${typeOfElement}`) {
 		let newEl = document.createElement(`${typeOfElement}`);
 		newEl.className = nameOFClass;
 		return newEl;
+	}
+	switchStateAtm(idAtm) {
+		let busyAtm = document.getElementById(idAtm);
+		busyAtm.style.backgroundColor = 'red';
 	}
 	addElement() {
 		console.log('Work in progress!');
@@ -180,16 +231,36 @@ class Controller extends EventEmmiter {
 		this.view = view;
 		this.model = model;
 		model.on('personAdded', personId => this.rebuildQueue(personId));
+		model.on('IamFirst', () => this.checkAtm());
+		// model.on('IamFree', () => this.checkAtm());
+		model.on('iAmBusy', id => this.useAtm(id));
+		model.on('personDeleted', personId =>
+			this.deletePersonFromQueue(personId)
+		);
 	}
 	rebuildQueue(personId) {
 		console.log(`My person ID: ${personId}`);
 		this.view.createPerson(personId);
+		this.model.checkAtm();
+		// this.model.checkPersonInBegin();
+	}
+	deletePersonFromQueue(personId) {
+		setTimeout(() => {
+			this.view.deletePersonFromQueue(personId);
+		}, 1000);
+	}
+	checkAtm() {
+		this.model.checkAtm();
+		// this.model
+	}
+	useAtm(idAtm) {
+		this.view.switchStateAtm(idAtm);
 	}
 	startEvent() {
 		let div = document.querySelector('.control');
 		console.log(div);
 		div.addEventListener('click', e => {
-			console.log(e.target.className);
+			// console.log(e.target.className);
 			if (e.target.className == 'btn-Start btn') {
 				console.log('You press Start');
 				this.model.amountPerson = 5;
@@ -209,7 +280,7 @@ class Atm {
 		this.isFree = true;
 	}
 	switchState() {
-		this.isFree ? false : true;
+		this.isFree ? (this.isFree = false) : (this.isFree = true);
 	}
 }
 

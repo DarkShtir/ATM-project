@@ -25,15 +25,17 @@ border-radius:20%;
 .atm-scene{
     display: flex;
     justify-content: space-around;
+    align-items:center;
     background-color: yellow;
     border: 5px solid black;
     width: auto;
 }
 .atm{
-    align-items: center;
+    display: flex;
     justify-content: space-between;
     background-color: green;
-    height: auto;
+    width: 100px;
+    height: 150px;
     border-radius: 30%;
 }
 .queue{
@@ -41,8 +43,9 @@ border-radius:20%;
     margin: 0px auto;
     flex-direction: column;
     align-items: center;
+    min-height: 50px;
     height: auto;
-    width: 100px;
+    width: 80px;
     background-color:white;
     border: 5px solid black;
 
