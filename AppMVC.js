@@ -85,11 +85,7 @@ class Model extends EventEmmiter {
 			if (iter < num) {
 				iter++;
 				let newPerson = new Person(iter, self.randomizer(3));
-				console.log('Person created');
-				console.log(newPerson);
 				self.queue.push(newPerson);
-				console.log('Person added in queue');
-				// console.log(self.queue[iter - 1].workWithAtm);
 				self.emitter('personAdded', queue[iter - 1].idPerson);
 				timer = self.randomizer(2);
 				timerID = setTimeout(create, timer);
@@ -114,19 +110,17 @@ class Model extends EventEmmiter {
 	// 		}
 	// 	});
 	// }
-	useAtm(idFreeAtm) {
+	useAtm(idAtm) {
 		if (this.queue.length < 1) {
 			console.log('Очередь пуста');
 		}
 		let time = this.deletePersonFromQueue();
-		let usedAtm = this.arrAtm[idFreeAtm];
-		console.log(usedAtm);
-		usedAtm.switchState();
-		self.emitter('iAmBusy', idFreeAtm);
-		console.log(`Atm ${idFreeAtm} is busy`);
+		console.log(self.arrAtm[idAtm - 1]);
+		self.arrAtm[idAtm - 1].switchState();
+		// self.emitter('iAmBusy', idAtm);
 		setTimeout(() => {
-			usedAtm.switchState();
-			self.emitter('IamFree', idFreeAtm);
+			self.arrAtm[idAtm - 1].switchState();
+			// self.emitter('IamFree', idAtm);
 		}, time);
 	}
 
@@ -134,6 +128,10 @@ class Model extends EventEmmiter {
 		this.arrAtm.forEach(value => {
 			if (value.isFree) {
 				this.useAtm(value.idAtm);
+			} else {
+				setTimeout(() => {
+					this.checkAtm();
+				}, 5000);
 			}
 		});
 	}
@@ -193,8 +191,6 @@ class View {
 		div.innerHTML = personID;
 		fragment.append(div);
 		queueDiv.appendChild(fragment);
-		console.log('Человек добавлен в очереди html');
-		console.log(queueDiv);
 	}
 	createQueue() {
 		let fragment = document.createDocumentFragment();
@@ -204,7 +200,6 @@ class View {
 	}
 	deletePersonFromQueue(personID) {
 		let deletedPerson = document.querySelector(`.personID-${personID}`);
-		console.log(deletedPerson);
 		deletedPerson.parentNode.removeChild(deletedPerson);
 		console.log(`Удаляю человека из очереди с ID ${personID}`);
 	}
@@ -231,18 +226,31 @@ class Controller extends EventEmmiter {
 		this.view = view;
 		this.model = model;
 		model.on('personAdded', personId => this.rebuildQueue(personId));
-		model.on('IamFirst', () => this.checkAtm());
+		// model.on('IamFirst', () => this.checkAtm());
 		// model.on('IamFree', () => this.checkAtm());
-		model.on('iAmBusy', id => this.useAtm(id));
-		model.on('personDeleted', personId =>
-			this.deletePersonFromQueue(personId)
-		);
+		// model.on('iAmBusy', id => this.useAtm(id));
+		// model.on('personDeleted', personId =>
+		// 	this.deletePersonFromQueue(personId)
+		// );
+	}
+	startEvent() {
+		let div = document.querySelector('.control');
+		console.log(div);
+		div.addEventListener('click', e => {
+			if (e.target.className == 'btn-Start btn') {
+				console.log('You press Start');
+				this.model.amountPerson = 5;
+				this.model.createScene();
+				this.view.createAtm(this.model.arrAtm);
+				this.view.createQueue();
+				this.model.createQueue(this.model.queue);
+			} else if (e.target.className === 'Finish') {
+			}
+		});
 	}
 	rebuildQueue(personId) {
-		console.log(`My person ID: ${personId}`);
 		this.view.createPerson(personId);
 		this.model.checkAtm();
-		// this.model.checkPersonInBegin();
 	}
 	deletePersonFromQueue(personId) {
 		setTimeout(() => {
@@ -255,22 +263,6 @@ class Controller extends EventEmmiter {
 	}
 	useAtm(idAtm) {
 		this.view.switchStateAtm(idAtm);
-	}
-	startEvent() {
-		let div = document.querySelector('.control');
-		console.log(div);
-		div.addEventListener('click', e => {
-			// console.log(e.target.className);
-			if (e.target.className == 'btn-Start btn') {
-				console.log('You press Start');
-				this.model.amountPerson = 5;
-				this.model.createScene();
-				this.view.createAtm(this.model.arrAtm);
-				this.view.createQueue();
-				this.model.createQueue(this.model.queue);
-			} else if (e.target.className === 'Finish') {
-			}
-		});
 	}
 }
 

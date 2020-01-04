@@ -38,6 +38,9 @@ border-radius:20%;
     height: 150px;
     border-radius: 30%;
 }
+.busy{
+    background-color: red;
+}
 .queue{
     display:flex;
     margin: 0px auto;
