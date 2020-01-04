@@ -122,13 +122,12 @@ class Model extends EventEmmiter {
 		}
 	}
 	switchState(idAtm) {
-		console.log(self.arrAtm[idAtm].isFree);
 		if (self.arrAtm[idAtm].isFree) {
 			self.arrAtm[idAtm].isFree = false;
-			self.emitter('changeSwitch', self.idAtm);
+			self.emitter('changeSwitchFalse', self.idAtm);
 		} else {
 			self.arrAtm[idAtm].isFree = true;
-			self.emitter('changeSwitch', self.idAtm);
+			self.emitter('changeSwitchTrue', self.idAtm);
 		}
 		// this.isFree ? (this.isFree = false) : (this.isFree = true);
 	}
@@ -172,6 +171,9 @@ class Controller extends EventEmmiter {
 		model.on('iAmFreeAtm', idAtm => this.model.useAtm(idAtm));
 		model.on('deletePerson', () => this.model.deletePersonFromQueue());
 		model.on('changeSwitch', idAtm => this.changeSwitch(idAtm));
+
+		model.on('changeSwitchTrue', idAtm => this.changeSwitchTrue(idAtm));
+		model.on('changeSwitchFalse', idAtm => this.changeSwitchFalse(idAtm));
 	}
 	startApp() {
 		view.createControl();
@@ -179,7 +181,7 @@ class Controller extends EventEmmiter {
 		let div = document.querySelector('.control');
 		div.addEventListener('click', e => {
 			if (e.target.className == 'btn-Start btn') {
-				this.model.amountAtm = 2;
+				this.model.amountAtm = 3;
 				this.model.createScene();
 				this.view.createAtm(this.model.arrAtm);
 				this.model.createQueue();
@@ -196,8 +198,11 @@ class Controller extends EventEmmiter {
 		this.view.deletePersonFromQueue(personId);
 		this.model.checkAtm();
 	}
-	changeSwitch(idAtm) {
-		this.view.switchStateAtm(idAtm);
+	changeSwitchTrue(idAtm) {
+		this.view.switchStateAtm(idAtm, true);
+	}
+	changeSwitchFalse(idAtm) {
+		this.view.switchStateAtm(idAtm, false);
 	}
 }
 
@@ -265,14 +270,12 @@ class View {
 		newEl.className = nameOFClass;
 		return newEl;
 	}
-	switchStateAtm(idAtm) {
+	switchStateAtm(idAtm, state) {
 		let busyAtm = document.getElementById(idAtm);
-		console.log(`Я поменял состояние банкомата с ID ${idAtm}`);
-		console.log(busyAtm);
-		if (!busyAtm.classList.contains('busy')) {
-			busyAtm.classList.add('busy');
-		} else {
+		if (state === true) {
 			busyAtm.classList.remove('busy');
+		} else if (state === false) {
+			busyAtm.classList.add('busy');
 		}
 	}
 }
