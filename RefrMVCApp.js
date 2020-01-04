@@ -50,7 +50,6 @@ class Model extends EventEmmiter {
 		for (let i = 0; i < this.amountAtm; i++) {
 			this.idAtm++;
 			this.pushAtmInArr(this.createAtm(this.idAtm));
-			console.log(this.arrAtm);
 		}
 	}
 	createPerson() {
@@ -76,7 +75,6 @@ class Model extends EventEmmiter {
 					self.queue[self.queue.length - 1].idPerson
 				);
 				timer = self.randomizer(2);
-				console.log(self.queue);
 				timerID = setTimeout(create, timer);
 			} else {
 				clearTimeout = timerID;
@@ -84,26 +82,27 @@ class Model extends EventEmmiter {
 		}, timer);
 	}
 
-	checkAtm() {
-		this.arrAtm.forEach(value => {
-			if (value.isFree) {
-				console.log(`ATM with ID ${value.idAtm} is free`);
-				self.emitter('iAmFreeAtm', value.idAtm);
-			}
-		});
-	}
+	// checkAtm() {
+	// 	this.arrAtm.forEach(value => {
+	// 		if (value.isFree) {
+	// 			console.log(`ATM with ID ${value.idAtm} is free`);
+	// 			self.emitter('iAmFreeAtm', value.idAtm);
+	// 		}
+	// 	});
+	// }
+
 	useAtm(idAtm) {
-		if (this.queue.length < 1) {
-			return console.log('Очередь пуста');
-		}
-		console.log(idAtm);
+		let usedAtm = self.arrAtm[idAtm - 1];
+		console.log(usedAtm.isFree);
+		console.log(`Используется АТМ с ID ${idAtm}`);
 		let time = self.queue[0].workWithAtm;
-		self.switchState(idAtm - 1);
+		self.arrAtm[idAtm - 1] = self.switchState(usedAtm);
 		console.log(`Теперь банкомат с ID ${idAtm} занят`);
 		this.emitter('deletePerson');
-		setTimeout(() => {
-			self.switchState(idAtm - 1);
-			self.checkAtm();
+		setTimeout(usedAtm => {
+			self.arrAtm[idAtm - 1] = self.switchState(usedAtm);
+
+			// self.checkAtm();
 		}, time);
 	}
 
@@ -116,18 +115,20 @@ class Model extends EventEmmiter {
 			}
 		}, 1000);
 	}
-	iAmFirst() {
-		if (this.queue.length <= this.arrAtm.length) {
-			this.checkAtm();
-		}
-	}
-	switchState(idAtm) {
-		if (self.arrAtm[idAtm].isFree) {
-			self.arrAtm[idAtm].isFree = false;
-			self.emitter('changeSwitchFalse', self.idAtm);
+	// iAmFirst() {
+	// 	if (this.queue.length <= this.arrAtm.length) {
+	// 		this.checkAtm();
+	// 	}
+	// }
+	switchState(usedAtm) {
+		if (usedAtm.isFree) {
+			usedAtm.isFree = false;
+			self.emitter('changeSwitchFalse', usedAtm);
+			return usedAtm;
 		} else {
-			self.arrAtm[idAtm].isFree = true;
-			self.emitter('changeSwitchTrue', self.idAtm);
+			usedAtm.isFree = true;
+			self.emitter('changeSwitchTrue', usedAtm);
+			return usedAtm;
 		}
 		// this.isFree ? (this.isFree = false) : (this.isFree = true);
 	}
@@ -146,6 +147,7 @@ class Model extends EventEmmiter {
 			if (value.isFree) {
 				console.log(`ATM with ID ${value.idAtm} is free`);
 				self.emitter('iAmFreeAtm', value.idAtm);
+				return value.idAtm;
 			} else {
 				self.emitter('allAtmBusy');
 			}
@@ -154,7 +156,7 @@ class Model extends EventEmmiter {
 
 	randomizer(max, min = 1) {
 		const rand = 1000 * Math.floor(min + Math.random() * (max + 1 - min));
-		console.log(rand);
+		// console.log(rand);
 		return rand;
 	}
 }
@@ -164,16 +166,19 @@ class Controller extends EventEmmiter {
 		super();
 		this.view = view;
 		this.model = model;
+		//Old Events
 		model.on('personAdded', personId => this.rebuildQueue(personId));
 		model.on('personDeleted', personId =>
 			this.deletePersonFromQueue(personId)
 		);
-		model.on('iAmFreeAtm', idAtm => this.model.useAtm(idAtm));
 		model.on('deletePerson', () => this.model.deletePersonFromQueue());
 		model.on('changeSwitch', idAtm => this.changeSwitch(idAtm));
 
+		//NEW EVENTS
 		model.on('changeSwitchTrue', idAtm => this.changeSwitchTrue(idAtm));
 		model.on('changeSwitchFalse', idAtm => this.changeSwitchFalse(idAtm));
+		model.on('queueHavePersons', () => this.model.checkAtmState());
+		model.on('iAmFreeAtm', idAtm => this.model.useAtm(idAtm));
 	}
 	startApp() {
 		view.createControl();
@@ -191,18 +196,20 @@ class Controller extends EventEmmiter {
 	}
 	rebuildQueue(personId) {
 		this.view.createPerson(personId);
-		this.model.iAmFirst();
+		this.model.checkPersonInQueue();
+		// this.model.iAmFirst();
 		// this.model.checkAtm();
 	}
 	deletePersonFromQueue(personId) {
 		this.view.deletePersonFromQueue(personId);
-		this.model.checkAtm();
+		this.model.checkPersonInQueue();
+		// this.model.checkAtm();
 	}
-	changeSwitchTrue(idAtm) {
-		this.view.switchStateAtm(idAtm, true);
+	changeSwitchTrue(usedAtm) {
+		this.view.switchStateAtm(usedAtm, true);
 	}
-	changeSwitchFalse(idAtm) {
-		this.view.switchStateAtm(idAtm, false);
+	changeSwitchFalse(usedAtm) {
+		this.view.switchStateAtm(usedAtm, false);
 	}
 }
 
@@ -270,11 +277,11 @@ class View {
 		newEl.className = nameOFClass;
 		return newEl;
 	}
-	switchStateAtm(idAtm, state) {
-		let busyAtm = document.getElementById(idAtm);
+	switchStateAtm(usedAtm, state) {
+		let busyAtm = document.getElementById(usedAtm.idAtm);
 		if (state === true) {
 			busyAtm.classList.remove('busy');
-		} else if (state === false) {
+		} else {
 			busyAtm.classList.add('busy');
 		}
 	}
