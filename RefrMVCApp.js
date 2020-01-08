@@ -14,6 +14,7 @@ class EventEmmiter {
 class Atm {
 	constructor(idAtm) {
 		this.idAtm = idAtm;
+		this.idClient = '';
 		this.isFree = true;
 	}
 }
@@ -62,7 +63,7 @@ class Model extends EventEmmiter {
 	addPersonInQueue(person) {
 		self.queue.push(person);
 	}
-	createQueue(amountPerson = 10) {
+	createQueue(amountPerson = 20) {
 		let timer = 0;
 		let num = amountPerson;
 		let iter = 0;
@@ -84,20 +85,17 @@ class Model extends EventEmmiter {
 	}
 
 	useAtm(usedAtm) {
-		// if (self.queue.length > 0) {
 		let time = self.queue[0].workWithAtm;
+		usedAtm.idClient = self.queue[0].idPerson;
 		self.switchState(usedAtm);
 		console.log(
-			`Теперь банкомат с ID ${usedAtm.idAtm} занят на ${time /
-				1000} секунд`
+			`Теперь банкомат с ID ${usedAtm.idAtm} занят клиентом ${
+				usedAtm.idClient
+			} на ${time / 1000} секунд`
 		);
 		setTimeout(() => {
-			console.log(usedAtm);
 			self.switchState(usedAtm);
 		}, time);
-		// } else {
-		// 	this.checkPersonInQueue();
-		// }
 	}
 
 	deletePersonFromQueue() {
@@ -108,14 +106,15 @@ class Model extends EventEmmiter {
 		this.queue.splice(0, 1);
 	}
 	switchState(usedAtm) {
-		if (usedAtm.isFree) {
-			usedAtm.isFree = false;
-			console.log(`Я меняю состояние банкомата с ID ${usedAtm.idAtm}`);
-			self.emitter('changeSwitchFalse', usedAtm);
-		} else {
-			usedAtm.isFree = true;
-			self.emitter('changeSwitchTrue', usedAtm);
-		}
+		setTimeout(() => {
+			if (usedAtm.isFree) {
+				usedAtm.isFree = false;
+				self.emitter('changeSwitchFalse', usedAtm);
+			} else {
+				usedAtm.isFree = true;
+				self.emitter('changeSwitchTrue', usedAtm);
+			}
+		}, 1000);
 	}
 
 	//YOU MUST REFRACTOR YOUR CODE AND YOU MUST DO ONE GLOBAL CHECKOUT
@@ -128,24 +127,24 @@ class Model extends EventEmmiter {
 		}
 	}
 	checkAtmState() {
-		this.arrAtm.forEach(value => {
+		this.arrAtm.find(value => {
 			if (
 				value.isFree &&
 				this.queue.length &&
 				this.idDeletedPerson === this.queue[0].idPerson
 			) {
-				console.log(this.queue[0]);
-				console.log(this.idDeletedPerson);
+				console.log(`ID Удаляемой персоны ${this.idDeletedPerson}`);
+				console.log(`ID новой персоны ${this.queue[0].idPerson}`);
 				console.log(`ATM with ID ${value.idAtm} is free`);
 				this.idDeletedPerson++;
 				this.useAtm(value);
+				return;
 			}
 		});
 	}
 
 	randomizer(max, min = 1) {
 		const rand = 1000 * Math.floor(min + Math.random() * (max + 1 - min));
-		// console.log(rand);
 		return rand;
 	}
 }
@@ -160,7 +159,6 @@ class Controller extends EventEmmiter {
 		model.on('deletePerson', personId =>
 			this.deletePersonFromQueue(personId)
 		);
-
 		//NEW EVENTS
 		model.on('changeSwitchTrue', idAtm => this.changeSwitchTrue(idAtm));
 		model.on('changeSwitchFalse', idAtm => this.changeSwitchFalse(idAtm));
@@ -171,8 +169,8 @@ class Controller extends EventEmmiter {
 
 		let div = document.querySelector('.control');
 		div.addEventListener('click', e => {
-			if (e.target.className == 'btn-Start btn') {
-				this.model.amountAtm = 3;
+			if (e.target.classList.contains('btn-Start')) {
+				this.model.amountAtm = 2;
 				this.model.createScene();
 				this.view.createAtm(this.model.arrAtm);
 				this.model.createQueue();
@@ -190,12 +188,15 @@ class Controller extends EventEmmiter {
 		this.model.checkPersonInQueue();
 	}
 	changeSwitchTrue(usedAtm) {
-		this.view.switchStateAtm(usedAtm, true);
+		this.view.switchStateAtm(usedAtm);
+		this.view.removeClientInAtm(usedAtm);
 		this.model.checkPersonInQueue();
 	}
 	changeSwitchFalse(usedAtm) {
 		this.model.deletePersonFromQueue();
-		this.view.switchStateAtm(usedAtm, false);
+		this.view.switchStateAtm(usedAtm);
+		this.view.createClientInAtm(usedAtm);
+		this.model.checkPersonInQueue();
 	}
 }
 
@@ -223,7 +224,7 @@ class View {
 	}
 	createBtn(name) {
 		let btn = document.createElement('button');
-		btn.className = `btn-${name} btn`;
+		btn.className = `btn-${name} btn pure-button`;
 		btn.innerHTML = name;
 		return btn;
 	}
@@ -260,21 +261,38 @@ class View {
 		} else {
 			deletedPerson.remove();
 		}
-		// deletedPerson.parentNode.removeChild(deletedPerson);
-		// console.log(`Удаляю человека из очереди с ID ${idPerson}`);
 	}
 	createNewElement(typeOfElement, nameOFClass = `${typeOfElement}`) {
 		let newEl = document.createElement(`${typeOfElement}`);
 		newEl.className = nameOFClass;
 		return newEl;
 	}
-	switchStateAtm(usedAtm, state) {
+	switchStateAtm(usedAtm) {
 		let busyAtm = document.getElementById(usedAtm.idAtm);
-		if (state === true) {
+		if (usedAtm.isFree === true) {
 			busyAtm.classList.remove('busy');
 		} else {
 			busyAtm.classList.add('busy');
 		}
+	}
+	createClientInAtm(usedAtm) {
+		let fragment = document.createDocumentFragment();
+		let busyAtm = document.getElementById(usedAtm.idAtm);
+		let div = this.createNewElement(
+			'div',
+			`idClient-${usedAtm.idClient} client`
+		);
+		div.innerHTML = usedAtm.idClient;
+		fragment.append(div);
+		busyAtm.appendChild(fragment);
+	}
+	removeClientInAtm(usedAtm) {
+		let atm = document.getElementById(`${usedAtm.idAtm}`);
+		while (atm.firstChild) {
+			atm.removeChild(atm.firstChild);
+		}
+
+		// atm.querySelectorAll(`.client`).remove();
 	}
 }
 const view = new View();
