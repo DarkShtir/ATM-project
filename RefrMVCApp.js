@@ -37,6 +37,7 @@ class Model extends EventEmmiter {
 		this.idAtm = 0;
 		this.idPerson = 0;
 		this.idDeletedPerson = 1;
+		this.timerID;
 		self = this;
 	}
 	createAtm(idAtm) {
@@ -45,14 +46,18 @@ class Model extends EventEmmiter {
 	pushAtmInArr(atm) {
 		this.arrAtm.push(atm);
 	}
-	removeAtmFromArr() {
-		this.arrAtm.splice(this.arrAtm.length - 1, 1);
+	deleteSingleAtm() {
+		this.arrAtm.splice(this.idAtm, 1);
+		this.idAtm--;
 	}
-	createScene() {
+	createSeveralAtm() {
 		for (let i = 0; i < this.amountAtm; i++) {
-			this.idAtm++;
-			this.pushAtmInArr(this.createAtm(this.idAtm));
+			this.createSingleAtm();
 		}
+	}
+	createSingleAtm() {
+		this.idAtm++;
+		this.pushAtmInArr(this.createAtm(this.idAtm));
 	}
 	createPerson() {
 		self.idPerson++;
@@ -68,7 +73,7 @@ class Model extends EventEmmiter {
 		let num = amountPerson;
 		let iter = 0;
 
-		let timerID = setTimeout(function create() {
+		this.timerID = setTimeout(function create() {
 			if (iter < num) {
 				iter++;
 				self.addPersonInQueue(self.createPerson());
@@ -77,7 +82,7 @@ class Model extends EventEmmiter {
 					self.queue[self.queue.length - 1].idPerson
 				);
 				timer = self.randomizer(2);
-				timerID = setTimeout(create, timer);
+				this.timerID = setTimeout(create, timer);
 			} else {
 				clearTimeout = timerID;
 			}
@@ -154,6 +159,7 @@ class Controller extends EventEmmiter {
 		super();
 		this.view = view;
 		this.model = model;
+		this.numberOfStarts = 0;
 		//Old Events
 		model.on('personAdded', personId => this.rebuildQueue(personId));
 		model.on('deletePerson', personId =>
@@ -170,12 +176,34 @@ class Controller extends EventEmmiter {
 		let div = document.querySelector('.control');
 		div.addEventListener('click', e => {
 			if (e.target.classList.contains('btn-Start')) {
-				this.model.amountAtm = 2;
-				this.model.createScene();
-				this.view.createAtm(this.model.arrAtm);
-				this.model.createQueue();
-				this.view.createQueue();
+				if (this.numberOfStarts === 0) {
+					this.model.amountAtm = 2;
+					this.model.createSeveralAtm();
+					this.view.createSeveralAtm(this.model.arrAtm.length);
+					this.model.createQueue();
+					this.view.createQueue();
+					this.numberOfStarts++;
+				} else {
+					return console.log('Вы уже нажали старт!');
+				}
+			} else if (e.target.classList.contains('btn-Debug')) {
+				console.log('Ты нажал на клавишу Debug');
 				debugger;
+			} else if (e.target.classList.contains('btn-AddATM')) {
+				this.model.createSingleAtm();
+				this.view.createSingleAtm(this.model.idAtm);
+			} else if (e.target.classList.contains('btn-DeleteATM')) {
+				if (
+					this.model.idAtm > 0 &&
+					this.model.arrAtm[this.model.arrAtm.length - 1].isFree
+				) {
+					this.model.deleteSingleAtm();
+					this.view.deleteSingleAtm(this.model.arrAtm.length);
+				} else {
+					console.log(`Ни одного банкомата не установлено!
+					или
+					Банкомат еще занят!`);
+				}
 			}
 		});
 	}
@@ -212,11 +240,11 @@ class View {
 		let fragment = document.createDocumentFragment();
 		let div = this.createNewElement('div', 'control');
 		let startBtn = this.createBtn('Start');
-		let finishBtn = this.createBtn('Finish');
+		let debugBtn = this.createBtn('Debug');
 		let addAtm = this.createBtn('AddATM');
-		let deleteAtm = this.createBtn('DeleteAtm');
+		let deleteAtm = this.createBtn('DeleteATM');
 		div.append(startBtn);
-		div.append(finishBtn);
+		div.append(debugBtn);
 		div.append(addAtm);
 		div.append(deleteAtm);
 		fragment.append(div);
@@ -229,16 +257,27 @@ class View {
 		return btn;
 	}
 
-	createAtm(arr) {
+	createSeveralAtm(countAtm) {
 		let fragment = document.createDocumentFragment();
 		let divScene = this.createNewElement('div', 'atm-scene');
-		arr.forEach((val, index) => {
-			let div = this.createNewElement('div', `${index + 1}-atm atm`);
-			div.id = val.idAtm;
+		for (let i = 1; i < countAtm + 1; i++) {
+			let div = this.createNewElement('div', `${i}-atm atm`);
+			div.id = i;
 			divScene.append(div);
-		});
+		}
 		fragment.append(divScene);
 		this.body.append(fragment);
+	}
+
+	createSingleAtm(idAtm) {
+		let divScene = document.querySelector('.atm-scene');
+		console.log(divScene);
+		let div = this.createNewElement('div', `${idAtm}-atm atm`);
+		div.id = idAtm;
+		divScene.append(div);
+	}
+	deleteSingleAtm(idAtm) {
+		document.getElementById(idAtm).remove();
 	}
 	createPerson(idPerson) {
 		let fragment = document.createDocumentFragment();
@@ -286,13 +325,13 @@ class View {
 		fragment.append(div);
 		busyAtm.appendChild(fragment);
 	}
+
+	//Repair function removeClientInAtm!!!
 	removeClientInAtm(usedAtm) {
 		let atm = document.getElementById(`${usedAtm.idAtm}`);
 		while (atm.firstChild) {
 			atm.removeChild(atm.firstChild);
 		}
-
-		// atm.querySelectorAll(`.client`).remove();
 	}
 }
 const view = new View();
