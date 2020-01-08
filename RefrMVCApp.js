@@ -84,7 +84,7 @@ class Model extends EventEmmiter {
 				timer = self.randomizer(2);
 				this.timerID = setTimeout(create, timer);
 			} else {
-				clearTimeout = timerID;
+				clearTimeout(timerID);
 			}
 		}, timer);
 	}
